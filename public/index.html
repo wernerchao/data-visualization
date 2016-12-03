@@ -53,8 +53,8 @@ d3.csv("amazon-directed-graph.csv", function(error, links) {
         .nodes(d3.values(nodes))
         .links(links)
         .size([width, height])
-        .linkDistance(60)
-        .charge(-500)
+        .linkDistance(80)
+        .charge(-600)
         .on("tick", tick)
         .start();
 
@@ -92,7 +92,7 @@ d3.csv("amazon-directed-graph.csv", function(error, links) {
 
     // add the nodes
     node.append("circle")
-        .attr("r", 2.5);
+        .attr("r", 6);
 
     // add the text 
     node.append("text")
