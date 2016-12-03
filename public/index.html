@@ -1,69 +1,126 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Welcome to Firebase Hosting</title>
-    <style media="screen">
-      body {
-        font-family: Roboto, Arial, sans-serif;
-        background: #ECEFF1;
-        color: rgba(0,0,0,0.87);
-      }
+<meta charset="utf-8">
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<style>
 
-      a {
-        color: rgb(3,155,229);
-      }
+path.link {
+  fill: none;
+  stroke: #666;
+  stroke-width: 1.5px;
+}
 
-      #message {
-        max-width: 400px;
-        margin: 40px auto;
-        box-shadow: 0 1px 3px 0 rgba(0,0,0,0.2),0 1px 1px 0 rgba(0,0,0,0.14),0 2px 1px -1px rgba(0,0,0,0.12);
-        border-radius: 2px;
-        background: white;
-        padding: 16px 24px;
-      }
+circle {
+  fill: #ccc;
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
 
-      #message h1 {
-        font-size: 22px;
-        font-weight: 500;
-        text-align: center;
-        margin: 0 0 16px;
-      }
+text {
+  fill: #000;
+  font: 10px sans-serif;
+  pointer-events: none;
+}
 
-      #message p {
-        font-weight: 300;
-        line-height: 150%;
-      }
+</style>
+<body>
+<script>
 
-      #message ul {
-        list-style: none;
-        margin: 16px 0 0;
-        padding: 0;
-        text-align: center;
-      }
+// d3.select("body").append("p");
+// get the data
+d3.csv("amazon-directed-graph.csv", function(error, links) {
 
-      #message li a {
-        display: inline-block;
-        padding: 8px;
-        text-transform: uppercase;
-        text-decoration: none;
-        font-weight: 500;
-        background: rgb(3,155,229);
-        color: white;
-        border: 1px solid rgb(3,155,229);
-        border-radius: 3px;
-        font-size: 14px;
-        box-shadow: 0 2px 5px 0 rgba(0,0,0,.26);
-      }
-    </style>
-  </head>
-  <body>
-    <div id="message">
-      <h1>Welcome to Firebase Hosting</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <ul>
-        <li><a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a></li>
-      </ul>
-    </div>
-  </body>
+    var nodes = {};
+
+    // Compute the distinct nodes from the links.
+    links.forEach(function(link) {
+        link.source = nodes[link.source] || 
+            (nodes[link.source] = {name: link.source});
+
+        // This section is like writing an if statement like this:
+        // if (link.source != nodes[link.source]) {
+        //     nodes[link.source] = {name: link.source}
+        // };
+
+        link.target = nodes[link.target] || 
+            (nodes[link.target] = {name: link.target});
+        link.value = +link.value;
+    });
+
+    var width = 1060,
+        height = 800;
+
+    var force = d3.layout.force()
+        .nodes(d3.values(nodes))
+        .links(links)
+        .size([width, height])
+        .linkDistance(60)
+        .charge(-500)
+        .on("tick", tick)
+        .start();
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    // build the arrow.
+    svg.append("svg:defs").selectAll("marker")
+        .data(["end"])
+    .enter().append("svg:marker")
+        .attr("id", String)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 15)
+        .attr("refY", -1.5)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+    .append("svg:path")
+        .attr("d", "M0,-5L10,0L0,5");
+
+    // add the links and the arrows
+    var path = svg.append("svg:g").selectAll("path")
+        .data(force.links())
+    .enter().append("svg:path")
+        .attr("class", "link")
+        .attr("marker-end", "url(#end)");
+
+    // define the nodes
+    var node = svg.selectAll(".node")
+        .data(force.nodes())
+    .enter().append("g")
+        .attr("class", "node")
+        .call(force.drag);
+
+    // add the nodes
+    node.append("circle")
+        .attr("r", 2.5);
+
+    // add the text 
+    node.append("text")
+        .attr("x", 12)
+        .attr("dy", ".35em")
+        .text(function(d) { return d.name; });
+
+    // add the curvy lines
+    function tick() {
+        path.attr("d", function(d) {
+            var dx = d.target.x - d.source.x,
+                dy = d.target.y - d.source.y,
+                dr = Math.sqrt(dx * dx + dy * dy);
+            return "M" + 
+                d.source.x + "," + 
+                d.source.y + "A" + 
+                dr + "," + dr + " 0 0,1 " + 
+                d.target.x + "," + 
+                d.target.y;
+        });
+
+        node
+            .attr("transform", function(d) { 
+                return "translate(" + d.x + "," + d.y + ")"; });
+    }
+
+});
+
+</script>
+</body>
 </html>
